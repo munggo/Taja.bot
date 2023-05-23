@@ -14,13 +14,13 @@ app = App(token=BOT_TOKEN)
 
 
 @app.event("app_mention")
-def on_mention(event, reply):
+def on_mention(event, say):
     game = taja.start(event["channel"])
-    reply(game.sentence)
+    say(game.sentence)
 
 
 @app.event("message")
-def on_message(event, reply):
+def on_message(event, say):
     timestamp = time.time()
     channel = event["channel"]
     user = event["user"]
@@ -32,7 +32,7 @@ def on_message(event, reply):
 
     if taja.report(game, user, entered, timestamp) is True:
         result = taja.get_result(game)
-        reply(result)
+        say(result)
 
 
 if __name__ == "__main__":
