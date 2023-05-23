@@ -1,4 +1,3 @@
-import core
 import os
 import time
 import taja
