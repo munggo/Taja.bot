@@ -68,7 +68,7 @@ class Taja:
                                                  participant.wpm)
             participants.append(participant)
         # TODO: sort in the order of score
-        return str(participants)
+        return participants
 
 
 def _calculate_speed(entered: str, elapsed_sec: time) -> float:

@@ -8,7 +8,17 @@ if __name__ == "__main__":
     app = taja.Taja(db=db)
 
     game = app.start("console")
-    print(game)
+    print(game.sentence)
+
     entered = input()
-    app.report(game, "console user", entered, time.time())
-    print(app.get_result(game))
+
+    game = app.find_game_by_sentence("console", entered)
+    if game is not None:
+        app.report(game, "console user", entered, time.time())
+        participants = app.get_result(game)
+        for participant in participants:
+            text = participant.id + ": " + \
+                   str(int(participant.accuracy * 100)) + "% / " + \
+                   str(int(participant.wpm)) + " 타수/분 / " + \
+                   str(int(participant.score))
+            print(text)
