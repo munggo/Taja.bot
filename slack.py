@@ -26,7 +26,7 @@ def on_message(event, say):
     user = event["user"]
     entered = event["text"]
 
-    game = taja.find_game(channel, entered)
+    game = taja.find_game_by_sentence(channel, entered)
     if game is None:
         return
 

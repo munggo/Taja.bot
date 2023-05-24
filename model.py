@@ -7,7 +7,9 @@ from dataclasses import dataclass, field
 class Participant:
     id: str
     accuracy: float
+    wpm: float
     time_entered: time
+    score: int
 
 
 @dataclass
@@ -17,11 +19,3 @@ class Game:
     sentence: str
     time_started: time
     participants: list[Participant] = field(default_factory=list)
-
-
-def query(channel: str, entered_sentence: str, time_window_sec: int) -> Game:
-    pass
-
-
-def save(game: Game) -> bool:
-    pass

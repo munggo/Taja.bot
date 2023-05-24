@@ -13,13 +13,14 @@ PARTICIPANT_TABLE = \
                 game_id text NOT NULL,
                 name text NOT NULL,
                 accuracy real NOT NULL,
+                wpm real NOT NULL,
                 time_entered real NOT NULL);
         """
 
 PARTICIPANT_ENTRY = \
         """
-        INSERT INTO participant (game_id,name,accuracy,time_entered)
-        VALUES(?,?,?,?)
+        INSERT INTO participant (game_id,name,accuracy,wpm,time_entered)
+        VALUES(?,?,?,?,?)
         """
 
 GAME_TABLE = \
@@ -38,12 +39,10 @@ GAME_ENTRY = \
 
 
 # NOTE: This module is not thread-safe
-class DB(db.DBInterface):
-    _conn = None
-
+class SQLite(db.DBInterface):
     def __new__(cls):
         if not hasattr(cls, "instance"):
-            cls.instance = super(DB, cls).__new__(cls)
+            cls.instance = super(SQLite, cls).__new__(cls)
         return cls.instance
 
     def __init__(self, db_file: str = "db.sqlite"):
@@ -68,7 +67,7 @@ class DB(db.DBInterface):
         cur.execute(GAME_ENTRY, (game.id, game.channel, game.sentence,
                                  game.time_started))
         for u in game.participants:
-            cur.execute(PARTICIPANT_ENTRY, (game.id, u.id, u.accuracy,
+            cur.execute(PARTICIPANT_ENTRY, (game.id, u.id, u.accuracy, u.wpm,
                                             u.time_entered))
         self._conn.commit()
 
@@ -94,15 +93,23 @@ class DB(db.DBInterface):
 
         participants = []
         for row in rows:
-            participant = Participant(id=row[2], accuracy=row[3],
-                                      time_entered=row[4])
+            participant = Participant(id=row[2], accuracy=row[3], wpm=row[4],
+                                      time_entered=row[5], score=None)
             participants.append(participant)
 
         return participants
 
 
 if __name__ == '__main__':
-    t1 = DB()
-    t2 = DB()
+    t1 = SQLite()
+    t2 = SQLite()
     if id(t1) != id(t2):
         print("Should be singleton")
+
+    #t = Game(id="abcd", channel="chaaaa", sentence="exampl", time_started=time.time())
+    #u = Participant(id="Kwon", accuracy=0, wpm=0, score=0, time_entered=time.time())
+    #t.participants.append(u)
+    #t1.insert(t)
+    print(t1.query_games("chaaaa", 720000))
+    print(t1.query_participants("abcd"))
+    t1.close()
