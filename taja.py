@@ -16,8 +16,12 @@ class Taja:
         return random.choice(self._sentences).strip()
 
     def start(self, channel: str = None) -> Game:
-        return Game(id=str(uuid.uuid4()), channel=channel,
+        game = Game(id=str(uuid.uuid4()), channel=channel,
                     sentence=self._get_sentence(), time_started=time.time())
+        if game is not None:
+            self._db.insert_game(game)
+
+        return game
 
     def report(self, game: Game, user_id: str, entered_sentece: str,
                timestamp: time) -> bool:
@@ -35,15 +39,15 @@ class Taja:
         game.participants.append(user)
 
         # 3. add the game into database if not exists
-        if len(game.participants) == 1 and self._db is not None:
-            return self._db.insert(game)
+        if self._db is not None:
+            self._db.insert_participate(game, user)
 
         return True
 
     # FIXME: not work correctly on the same sentence occurence in a time window
     def find_game_by_sentence(self, channel: str = None,
-                               entered_sentece: str = None,
-                               time_window_sec: int = 15) -> Game:
+                              entered_sentece: str = None,
+                              time_window_sec: int = 15) -> Game:
         if self._db is None or entered_sentece is None:
             return None
 
@@ -51,8 +55,9 @@ class Taja:
         for game in games:
             # assume it matches if accuracy is more than 50%
             if _calculate_accuracy(game.sentence, entered_sentece) > 0.5:
-                participant = self._db.query_participants(game.id)
-                game.participants.append(participant)
+                participants = self._db.query_participants(game.id)
+                if len(participants) > 0:
+                    game.participants.append(participants)
                 return game
         return None
 
@@ -63,7 +68,7 @@ class Taja:
                                                  participant.wpm)
             participants.append(participant)
         # TODO: sort in the order of score
-        return participants
+        return str(participants)
 
 
 def _calculate_speed(entered: str, elapsed_sec: time) -> float:
@@ -85,6 +90,6 @@ def _calculate_score(accuracy: float, wpm: float) -> int:
 
 def _has_participated(participants: list[Participant], user_id: str):
     for participant in participants:
-        if participant.id == user_id:
+        if type(participant) is Participant and participant.id == user_id:
             return True
     return False

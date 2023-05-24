@@ -47,7 +47,7 @@ class SQLite(db.DBInterface):
 
     def __init__(self, db_file: str = "db.sqlite"):
         try:
-            self._conn = sqlite3.connect(db_file)
+            self._conn = sqlite3.connect(db_file, check_same_thread=False)
             cur = self._conn.cursor()
             cur.execute(PARTICIPANT_TABLE)
             cur.execute(GAME_TABLE)
@@ -62,13 +62,16 @@ class SQLite(db.DBInterface):
         if self._conn:
             self._conn.close()
 
-    def insert(self, game: Game):
+    def insert_game(self, game: Game):
         cur = self._conn.cursor()
         cur.execute(GAME_ENTRY, (game.id, game.channel, game.sentence,
                                  game.time_started))
-        for u in game.participants:
-            cur.execute(PARTICIPANT_ENTRY, (game.id, u.id, u.accuracy, u.wpm,
-                                            u.time_entered))
+        self._conn.commit()
+
+    def insert_participate(self, game: Game, user: Participant):
+        cur = self._conn.cursor()
+        cur.execute(PARTICIPANT_ENTRY, (game.id, user.id, user.accuracy,
+                                        user.wpm, user.time_entered))
         self._conn.commit()
 
     def query_games(self, channel: str, time_window_sec: int) -> list[Game]:
