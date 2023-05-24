@@ -57,7 +57,7 @@ class Taja:
             if _calculate_accuracy(game.sentence, entered_sentece) > 0.5:
                 participants = self._db.query_participants(game.id)
                 if len(participants) > 0:
-                    game.participants.append(participants)
+                    game.participants.append(*participants)
                 return game
         return None
 
@@ -90,6 +90,6 @@ def _calculate_score(accuracy: float, wpm: float) -> int:
 
 def _has_participated(participants: list[Participant], user_id: str):
     for participant in participants:
-        if type(participant) is Participant and participant.id == user_id:
+        if participant.id == user_id:
             return True
     return False
