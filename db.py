@@ -7,7 +7,10 @@ class DBInterface(metaclass=abc.ABCMeta):
     def __subclasshook__(cls, subclass):
         return (hasattr(subclass, "open") and callable(subclass.open) and
                 hasattr(subclass, "close") and callable(subclass.close) and
-                hasattr(subclass, "insert") and callable(subclass.insert) and
+                hasattr(subclass, "insert_game") and
+                callable(subclass.insert_game) and
+                hasattr(subclass, "insert_participate") and
+                callable(subclass.insert_participate) and
                 hasattr(subclass, "query_games") and
                 callable(subclass.query_games) and
                 hasattr(subclass, "query_participants") and
@@ -19,6 +22,14 @@ class DBInterface(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def close(self):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def insert_game(self, game: Game):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def insert_participate(self, game: Game, user: Participant):
         raise NotImplementedError
 
     @abc.abstractmethod
