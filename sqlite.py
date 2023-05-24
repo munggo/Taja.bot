@@ -108,11 +108,3 @@ if __name__ == '__main__':
     t2 = SQLite()
     if id(t1) != id(t2):
         print("Should be singleton")
-
-    #t = Game(id="abcd", channel="chaaaa", sentence="exampl", time_started=time.time())
-    #u = Participant(id="Kwon", accuracy=0, wpm=0, score=0, time_entered=time.time())
-    #t.participants.append(u)
-    #t1.insert(t)
-    print(t1.query_games("chaaaa", 720000))
-    print(t1.query_participants("abcd"))
-    t1.close()
