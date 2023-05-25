@@ -1,7 +1,9 @@
 import unittest
-import taja
+
+from taja import taja
+from taja.model import Participant
+
 import time
-from model import Participant
 
 
 class TestCoreFunctions(unittest.TestCase):

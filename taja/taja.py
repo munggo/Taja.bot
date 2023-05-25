@@ -3,12 +3,13 @@ import random
 import difflib
 import uuid
 
-import db
-from model import Game, Participant
+from taja import db
+from taja.model import Game, Participant
 
 
 class Taja:
-    def __init__(self, data_file: str = "data.txt", db: db.DBInterface = None):
+    def __init__(self, data_file: str = "data/korean.txt",
+                 db: db.DBInterface = None):
         self._sentences = open(data_file, "r").read().splitlines()
         self._db = db
 

@@ -1,5 +1,5 @@
 import abc
-from model import Game, Participant
+from taja.model import Game, Participant
 
 
 class DBInterface(metaclass=abc.ABCMeta):
