@@ -1,5 +1,5 @@
-import taja
-import sqlite
+from taja import taja
+from taja import sqlite
 import time
 
 

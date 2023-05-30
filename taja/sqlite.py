@@ -1,5 +1,5 @@
-import db
-from model import Game, Participant
+from taja import db
+from taja.model import Game, Participant
 import time
 
 import sqlite3
