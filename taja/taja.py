@@ -68,7 +68,8 @@ class Taja:
             participant.score = _calculate_score(participant.accuracy,
                                                  participant.wpm)
             participants.append(participant)
-        # TODO: sort in the order of score
+
+        participants.sort(key=lambda x: x.score)
         return participants
 
 

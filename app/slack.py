@@ -26,14 +26,6 @@ def on_timeout(channel):
     print(time.ctime())
 
 
-def replace_spaces(sentence):
-    chars = list(sentence)
-    for i in range(len(chars)):
-        if chars[i] == " ":
-            chars[i] = random.choice(['~', '+', '-', '_', '=', '^'])
-    return "".join(chars)
-
-
 @bot_app.event("app_mention")
 def on_mention(event, say):
     if not event["channel"] in locks:
@@ -43,8 +35,9 @@ def on_mention(event, say):
         return
 
     game = app.start(event["channel"])
-    say("*" + replace_spaces(game.sentence) + "*")
-    # TODO: Parse the message and hand over how many participants there are.
+    sentence = game.sentence.replace(" ", random.choice(['-', '_']))
+    say("*" + sentence + "*")
+    # TODO: Parse the message and hand over how many participants there will be.
     threading.Timer(15, on_timeout, [event["channel"]]).start()
 
 
