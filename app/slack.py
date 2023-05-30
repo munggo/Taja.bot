@@ -21,9 +21,21 @@ app = taja.Taja(db=db)
 locks = {}
 
 
-def on_timeout(channel):
-    locks[channel].release()
-    print(time.ctime())
+def on_timeout(args, kwargs):
+    args("게임이 종료되었습니다.")
+
+    game = app.find_game_by_sentence(kwargs.channel, kwargs.sentence)
+    participants = app.get_result(game)
+    for i, participant in enumerate(participants):
+        user_info = bot.users_info(user=participant.id)
+        name = user_info["user"]["profile"]["display_name"]
+        text = str(i+1) + ". " + \
+               name + ": " + \
+               str(int(participant.accuracy * 100)) + "% / " + \
+               str(int(participant.wpm)) + " 타수/분"
+        args(text)
+
+    locks[kwargs.channel].release()
 
 
 @bot_app.event("app_mention")
@@ -38,7 +50,7 @@ def on_mention(event, say):
     sentence = game.sentence.replace(" ", random.choice(['-', '_']))
     say("*" + sentence + "*")
     # TODO: Parse the message and hand over how many participants there will be.
-    threading.Timer(15, on_timeout, [event["channel"]]).start()
+    threading.Timer(10, on_timeout, [say, game]).start()
 
 
 @bot_app.event("message")
@@ -52,15 +64,7 @@ def on_message(event, say):
     if game is None:
         return
 
-    if app.report(game, user, entered, timestamp) is True:
-        participants = app.get_result(game)
-        for participant in participants:
-            user_info = bot.users_info(user=participant.id)
-            name = user_info["user"]["profile"]["display_name"]
-            text = name + ": " + \
-                   str(int(participant.accuracy * 100)) + "% / " + \
-                   str(int(participant.wpm)) + " 타수/분"
-            say(text)
+    app.report(game, user, entered, timestamp)
 
 
 if __name__ == "__main__":

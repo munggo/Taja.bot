@@ -58,7 +58,7 @@ class Taja:
             if _calculate_accuracy(game.sentence, entered_sentece) > 0.5:
                 participants = self._db.query_participants(game.id)
                 if len(participants) > 0:
-                    game.participants.append(*participants)
+                    game.participants.extend(participants)
                 return game
         return None
 
