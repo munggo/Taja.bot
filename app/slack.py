@@ -1,7 +1,7 @@
 import os
 import time
-import taja
-import sqlite
+from taja import taja
+from taja import sqlite
 
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
@@ -9,6 +9,7 @@ from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
 import random
+import threading
 
 APP_TOKEN = os.environ["SLACK_TAJA_APP_TOKEN"]
 BOT_TOKEN = os.environ["SLACK_TAJA_BOT_TOKEN"]
@@ -17,6 +18,12 @@ bot_app = App(token=BOT_TOKEN)
 bot = WebClient(token=BOT_TOKEN)
 db = sqlite.SQLite()
 app = taja.Taja(db=db)
+locks = {}
+
+
+def on_timeout(channel):
+    locks[channel].release()
+    print(time.ctime())
 
 
 def replace_spaces(sentence):
@@ -29,8 +36,16 @@ def replace_spaces(sentence):
 
 @bot_app.event("app_mention")
 def on_mention(event, say):
+    if not event["channel"] in locks:
+        locks[event["channel"]] = threading.Semaphore(1)
+    if locks[event["channel"]].acquire(blocking=False) is False:
+        say("이미 게임이 진행 중입니다.")
+        return
+
     game = app.start(event["channel"])
     say("*" + replace_spaces(game.sentence) + "*")
+    # TODO: Parse the message and hand over how many participants there are.
+    threading.Timer(15, on_timeout, [event["channel"]]).start()
 
 
 @bot_app.event("message")
