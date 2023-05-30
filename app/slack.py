@@ -20,11 +20,15 @@ db = sqlite.SQLite()
 app = taja.Taja(db=db)
 locks = {}
 
+MIN_WPM = 200
+MAX_TOUT = 20
+
 
 def on_timeout(args, kwargs):
     args("게임이 종료되었습니다.")
 
-    game = app.find_game_by_sentence(kwargs.channel, kwargs.sentence)
+    game = app.find_game_by_sentence(kwargs.channel, kwargs.sentence,
+                                     time_window_sec=60)
     participants = app.get_result(game)
     for i, participant in enumerate(participants):
         user_info = bot.users_info(user=participant.id)
@@ -48,9 +52,11 @@ def on_mention(event, say):
 
     game = app.start(event["channel"])
     sentence = game.sentence.replace(" ", random.choice(['-', '_']))
+    timeout = min(len(game.sentence.encode("utf-8")) / MIN_WPM * 60, MAX_TOUT)
+    say(f"다음 문장을 {int(timeout)}초 안에 입력하세요:")
     say("*" + sentence + "*")
     # TODO: Parse the message and hand over how many participants there will be.
-    threading.Timer(10, on_timeout, [say, game]).start()
+    threading.Timer(timeout, on_timeout, [say, game]).start()
 
 
 @bot_app.event("message")
