@@ -58,7 +58,7 @@ class Taja:
             if _calculate_accuracy(game.sentence, entered_sentece) > 0.5:
                 participants = self._db.query_participants(game.id)
                 if len(participants) > 0:
-                    game.participants.append(*participants)
+                    game.participants.extend(participants)
                 return game
         return None
 
@@ -68,7 +68,8 @@ class Taja:
             participant.score = _calculate_score(participant.accuracy,
                                                  participant.wpm)
             participants.append(participant)
-        # TODO: sort in the order of score
+
+        participants.sort(key=lambda x: x.score)
         return participants
 
 

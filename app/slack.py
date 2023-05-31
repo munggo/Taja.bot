@@ -1,7 +1,7 @@
 import os
 import time
-import taja
-import sqlite
+from taja import taja
+from taja import sqlite
 
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
@@ -9,6 +9,7 @@ from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
 
 import random
+import threading
 
 APP_TOKEN = os.environ["SLACK_TAJA_APP_TOKEN"]
 BOT_TOKEN = os.environ["SLACK_TAJA_BOT_TOKEN"]
@@ -17,20 +18,45 @@ bot_app = App(token=BOT_TOKEN)
 bot = WebClient(token=BOT_TOKEN)
 db = sqlite.SQLite()
 app = taja.Taja(db=db)
+locks = {}
+
+MIN_WPM = 200
+MAX_TOUT = 20
 
 
-def replace_spaces(sentence):
-    chars = list(sentence)
-    for i in range(len(chars)):
-        if chars[i] == " ":
-            chars[i] = random.choice(['~', '+', '-', '_', '=', '^'])
-    return "".join(chars)
+def on_timeout(args, kwargs):
+    args("게임이 종료되었습니다.")
+
+    game = app.find_game_by_sentence(kwargs.channel, kwargs.sentence,
+                                     time_window_sec=60)
+    participants = app.get_result(game)
+    for i, participant in enumerate(participants):
+        user_info = bot.users_info(user=participant.id)
+        name = user_info["user"]["profile"]["display_name"]
+        text = str(i+1) + ". " + \
+               name + ": " + \
+               str(int(participant.accuracy * 100)) + "% / " + \
+               str(int(participant.wpm)) + " 타수/분"
+        args(text)
+
+    locks[kwargs.channel].release()
 
 
 @bot_app.event("app_mention")
 def on_mention(event, say):
+    if not event["channel"] in locks:
+        locks[event["channel"]] = threading.Semaphore(1)
+    if locks[event["channel"]].acquire(blocking=False) is False:
+        say("이미 게임이 진행 중입니다.")
+        return
+
     game = app.start(event["channel"])
-    say("*" + replace_spaces(game.sentence) + "*")
+    sentence = game.sentence.replace(" ", random.choice(['-', '_']))
+    timeout = min(len(game.sentence.encode("utf-8")) / MIN_WPM * 60, MAX_TOUT)
+    say(f"다음 문장을 {int(timeout)}초 안에 입력하세요:")
+    say("*" + sentence + "*")
+    # TODO: Parse the message and hand over how many participants there will be.
+    threading.Timer(timeout, on_timeout, [say, game]).start()
 
 
 @bot_app.event("message")
@@ -44,15 +70,7 @@ def on_message(event, say):
     if game is None:
         return
 
-    if app.report(game, user, entered, timestamp) is True:
-        participants = app.get_result(game)
-        for participant in participants:
-            user_info = bot.users_info(user=participant.id)
-            name = user_info["user"]["profile"]["display_name"]
-            text = name + ": " + \
-                   str(int(participant.accuracy * 100)) + "% / " + \
-                   str(int(participant.wpm)) + " 타수/분"
-            say(text)
+    app.report(game, user, entered, timestamp)
 
 
 if __name__ == "__main__":
